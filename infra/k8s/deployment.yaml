@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: terraform-cost-policy-guard
+  labels:
+    app: terraform-cost-policy-guard
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: terraform-cost-policy-guard
+  template:
+    metadata:
+      labels:
+        app: terraform-cost-policy-guard
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /metrics
+        prometheus.io/port: "8080"
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/nagadeepak1998/terraform-cost-policy-guard:latest
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: terraform-cost-policy-guard
+spec:
+  selector:
+    app: terraform-cost-policy-guard
+  ports:
+    - port: 80
+      targetPort: 8080

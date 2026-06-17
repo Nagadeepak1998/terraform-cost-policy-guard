@@ -1,0 +1,6 @@
+services:
+  terraform-cost-policy-guard:
+    build:
+      context: ../..
+    ports:
+      - "8080:8080"

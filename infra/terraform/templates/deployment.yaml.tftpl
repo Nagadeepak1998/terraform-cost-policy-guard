@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: terraform-cost-policy-guard
+  namespace: terraform-cost-policy-guard
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: terraform-cost-policy-guard
+  template:
+    metadata:
+      labels:
+        app: terraform-cost-policy-guard
+    spec:
+      containers:
+        - name: api
+          image: ${image}
+          ports:
+            - containerPort: 8080
