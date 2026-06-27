@@ -31,4 +31,4 @@ def test_evaluate_endpoint_returns_summary() -> None:
     payload = response.json()
     assert response.status_code == 200
     assert payload["summary"]["blocked"] is True
-    assert payload["summary"]["violation_count"] == 4
+    assert payload["summary"]["violation_count"] == 5

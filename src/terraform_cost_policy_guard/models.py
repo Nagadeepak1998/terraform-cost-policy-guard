@@ -11,6 +11,7 @@ class PolicyViolation(BaseModel):
     message: str
     resource_address: str
     resource_type: str
+    remediation: str | None = None
 
 
 class EvaluationSummary(BaseModel):

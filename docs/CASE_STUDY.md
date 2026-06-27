@@ -24,6 +24,7 @@ Build a recruiter-readable service that can:
   - destructive changes on stateful resources
   - open ingress on sensitive ports
   - missing ownership and environment tags
+  - overly broad IAM policies with wildcard actions and resources
   - monthly cost delta above a release threshold
 
 ## Verification Strategy

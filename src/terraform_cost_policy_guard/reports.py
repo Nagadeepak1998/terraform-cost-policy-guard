@@ -33,8 +33,8 @@ def render_markdown_report(result: EvaluationResult) -> str:
     if result.violations:
         lines.extend(
             [
-                "| Severity | Policy | Resource | Message |",
-                "| --- | --- | --- | --- |",
+                "| Severity | Policy | Resource | Message | Remediation |",
+                "| --- | --- | --- | --- | --- |",
             ]
         )
         for violation in result.violations:
@@ -43,7 +43,8 @@ def render_markdown_report(result: EvaluationResult) -> str:
                 f"{violation.severity} | "
                 f"{violation.policy_id} | "
                 f"{violation.resource_address} | "
-                f"{violation.message} |"
+                f"{violation.message} | "
+                f"{violation.remediation or 'Review with platform owner.'} |"
             )
     else:
         lines.append("No policy violations found.")

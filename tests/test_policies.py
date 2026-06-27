@@ -28,6 +28,7 @@ def test_risky_plan_surfaces_multiple_policy_violations() -> None:
         "monthly-cost-threshold",
         "missing-required-tags",
         "protected-resource-delete",
+        "privileged-iam-policy",
         "public-sensitive-port",
     }
 
@@ -37,6 +38,8 @@ def test_markdown_report_summarizes_blocking_decision() -> None:
     report = render_markdown_report(result)
 
     assert "Decision: **BLOCK**" in report
-    assert "- critical: 2" in report
+    assert "- critical: 3" in report
     assert "- high: 2" in report
+    assert "Remediation" in report
+    assert "privileged-iam-policy" in report
     assert "| critical | protected-resource-delete | aws_db_instance.primary |" in report

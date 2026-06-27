@@ -4,7 +4,7 @@
 
 ## What It Demonstrates
 
-- Terraform plan risk analysis for cost, destructive changes, tag hygiene, and public ingress
+- Terraform plan risk analysis for cost, destructive changes, tag hygiene, public ingress, and privileged IAM
 - Python service design that works both as an API and as a pipeline CLI
 - Markdown policy review reports for pull requests and change tickets
 - Local test automation with `pytest`
@@ -43,6 +43,7 @@ docs/github-actions/ci.yml        CI workflow kept outside .github until workflo
 - `protected-resource-delete`: blocks deletes for stateful resources such as RDS and S3
 - `public-sensitive-port`: blocks public ingress to ports like `22`, `3306`, and `5432`
 - `missing-required-tags`: flags resources missing tags such as `owner` and `environment`
+- `privileged-iam-policy`: blocks IAM policies that grant `Action: "*"` on `Resource: "*"`
 
 ## Quick Start
 
