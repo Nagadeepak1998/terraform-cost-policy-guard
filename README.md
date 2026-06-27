@@ -6,6 +6,7 @@
 
 - Terraform plan risk analysis for cost, destructive changes, tag hygiene, and public ingress
 - Python service design that works both as an API and as a pipeline CLI
+- Markdown policy review reports for pull requests and change tickets
 - Local test automation with `pytest`
 - Container packaging plus Kubernetes and Terraform deployment scaffolding
 - Basic observability through `/healthz`, `/metrics`, and structured evaluation output
@@ -28,6 +29,7 @@ flowchart LR
 ```text
 src/terraform_cost_policy_guard/   API, CLI, policy logic, models
 tests/                            unit and API checks with plan fixtures
+reports/                          generated sample policy review report
 infra/docker/                     docker-compose example
 infra/k8s/                        Kubernetes deployment and service
 infra/terraform/                  Terraform skeleton for cluster deployment
@@ -63,6 +65,22 @@ The CLI prints JSON with:
 - evaluation summary
 - violation list
 - blocking decision
+
+Generate a reviewer-friendly Markdown report:
+
+```bash
+make sample-report
+```
+
+Sample output is tracked at `reports/risky-policy-review.md`.
+
+Fail a pipeline when the plan is blocked:
+
+```bash
+PYTHONPATH=src tf-policy-guard tests/fixtures/risky_plan.json --monthly-cost-limit 500 --fail-on-block
+```
+
+Blocked plans exit with code `2`.
 
 ## API Usage
 
@@ -112,13 +130,16 @@ gh auth refresh -h github.com -s workflow
 
 Commands verified locally in this run:
 
-- `make install`
-- `make test`
-- `make sample-eval`
-- `python -m uvicorn terraform_cost_policy_guard.main:app --host 127.0.0.1 --port 8080`
-- `curl http://127.0.0.1:8080/healthz`
-- `curl -X POST http://127.0.0.1:8080/evaluate ...`
-- `docker build -t terraform-cost-policy-guard:local .`
+- `. .venv/bin/activate && PYTHONPATH=src pytest`
+- `. .venv/bin/activate && PYTHONPATH=src python -m compileall src tests`
+- `make sample-report`
+- `. .venv/bin/activate && PYTHONPATH=src tf-policy-guard tests/fixtures/risky_plan.json --monthly-cost-limit 500 --fail-on-block` returned exit code `2` for the risky fixture
+
+Local blockers on this machine:
+
+- `docker: command not found`
+- `terraform: command not found`
+- `kubectl: command not found`
 
 ## Limitations
 

@@ -10,6 +10,7 @@ Build a recruiter-readable service that can:
 
 - evaluate Terraform plan JSON with deterministic rules
 - fail a pipeline when a plan is risky
+- generate a Markdown review artifact for a pull request or change ticket
 - expose an API for shared tooling
 - ship with the packaging and deployment assets expected in a production-shaped repo
 
@@ -17,6 +18,8 @@ Build a recruiter-readable service that can:
 
 - FastAPI keeps the service simple while still showing API design, health checks, and metrics endpoints.
 - The same `evaluate_plan` function powers both the HTTP service and the CLI so the behavior stays consistent across local use and CI/CD.
+- The CLI can write a Markdown report so reviewers see the decision, severity counts, blast radius, and remediation targets without reading raw JSON.
+- `--fail-on-block` turns the same evaluation into a real pipeline gate by returning a non-zero exit code for blocked plans.
 - Policy checks focus on practical platform risks:
   - destructive changes on stateful resources
   - open ingress on sensitive ports
@@ -27,8 +30,8 @@ Build a recruiter-readable service that can:
 
 - unit tests verify safe and risky fixtures
 - API tests prove the service contract
-- CLI execution proves pipeline ergonomics
-- a real container build proves packaging works
+- CLI execution proves pipeline ergonomics and produces `reports/risky-policy-review.md`
+- Docker, Kubernetes, and Terraform assets are included as deployment scaffolding; local Docker/Terraform/kubectl execution depends on those tools being installed
 
 ## Why This Helps My Portfolio
 

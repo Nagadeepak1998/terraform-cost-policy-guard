@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from terraform_cost_policy_guard.policies import evaluate_plan
+from terraform_cost_policy_guard.reports import render_markdown_report
 
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -29,3 +30,13 @@ def test_risky_plan_surfaces_multiple_policy_violations() -> None:
         "protected-resource-delete",
         "public-sensitive-port",
     }
+
+
+def test_markdown_report_summarizes_blocking_decision() -> None:
+    result = evaluate_plan(load_fixture("risky_plan.json"), monthly_cost_limit=500.0)
+    report = render_markdown_report(result)
+
+    assert "Decision: **BLOCK**" in report
+    assert "- critical: 2" in report
+    assert "- high: 2" in report
+    assert "| critical | protected-resource-delete | aws_db_instance.primary |" in report
