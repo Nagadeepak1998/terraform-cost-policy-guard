@@ -3,8 +3,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from terraform_cost_policy_guard.policies import evaluate_plan
-from terraform_cost_policy_guard.reports import render_markdown_report
+from terraform_cost_policy_guard.models import HistoryRequest
+from terraform_cost_policy_guard.policies import evaluate_plan, review_history
+from terraform_cost_policy_guard.reports import render_history_report, render_markdown_report
 
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -43,3 +44,16 @@ def test_markdown_report_summarizes_blocking_decision() -> None:
     assert "Remediation" in report
     assert "privileged-iam-policy" in report
     assert "| critical | protected-resource-delete | aws_db_instance.primary |" in report
+
+
+def test_history_review_honors_active_exception_and_blocks_expired_one() -> None:
+    result = review_history(HistoryRequest.model_validate(load_fixture("plan_history.json")))
+    assert result.status == "block"
+    assert result.blocked_windows == 1
+    assert result.windows[1].decision == "allow"
+    assert result.windows[1].waived_violation_count == 1
+    assert result.windows[2].expired_exception_count == 1
+    assert result.recurring_policy_ids == []
+    report = render_history_report(result)
+    assert "Decision: **BLOCK**" in report
+    assert "expired 2026-07-10" in report

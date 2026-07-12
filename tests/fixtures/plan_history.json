@@ -1,0 +1,21 @@
+{
+  "windows": [
+    {
+      "reviewed_on": "2026-07-01",
+      "change_id": "network-baseline",
+      "plan": {"planned_values": {"root_module": {"cost_estimate_monthly_delta": 120}}, "resource_changes": []}
+    },
+    {
+      "reviewed_on": "2026-07-05",
+      "change_id": "database-scale-up",
+      "plan": {"planned_values": {"root_module": {"cost_estimate_monthly_delta": 650}}, "resource_changes": []},
+      "exceptions": [{"policy_id": "monthly-cost-threshold", "owner": "finops", "expires_on": "2026-07-10", "reason": "Approved launch capacity"}]
+    },
+    {
+      "reviewed_on": "2026-07-12",
+      "change_id": "database-scale-up-followup",
+      "plan": {"planned_values": {"root_module": {"cost_estimate_monthly_delta": 700}}, "resource_changes": []},
+      "exceptions": [{"policy_id": "monthly-cost-threshold", "owner": "finops", "expires_on": "2026-07-10", "reason": "Approved launch capacity"}]
+    }
+  ]
+}

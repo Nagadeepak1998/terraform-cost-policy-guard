@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 
-from .models import EvaluationResult
+from .models import EvaluationResult, HistoryResult
 
 
 def render_markdown_report(result: EvaluationResult) -> str:
@@ -58,4 +58,29 @@ def render_markdown_report(result: EvaluationResult) -> str:
             "- Treat BLOCK as a release gate failure until the listed resources are remediated or approved by the platform owner.",
         ]
     )
+    return "\n".join(lines) + "\n"
+
+
+def render_history_report(result: HistoryResult) -> str:
+    lines = [
+        "# Terraform Policy History Review", "",
+        f"Decision: **{result.status.upper()}**", "",
+        "## Portfolio Summary", "",
+        f"- Reviewed plans: {result.reviewed_windows}",
+        f"- Blocked plans: {result.blocked_windows}",
+        f"- Combined monthly cost delta: ${result.total_monthly_cost_delta:.2f}",
+        f"- Expired exceptions: {len(result.expired_exceptions)}",
+        f"- Recurring policies: {', '.join(result.recurring_policy_ids) or 'none'}", "",
+        "## Change History", "",
+        "| Reviewed | Change | Decision | Violations | Waived | Expired exceptions | Cost delta |",
+        "| --- | --- | --- | ---: | ---: | ---: | ---: |",
+    ]
+    for window in result.windows:
+        lines.append(f"| {window.reviewed_on} | {window.change_id} | {window.decision} | {window.violation_count} | {window.waived_violation_count} | {window.expired_exception_count} | ${window.monthly_cost_delta:.2f} |")
+    lines.extend(["", "## Exception Governance", ""])
+    if result.expired_exceptions:
+        for item in result.expired_exceptions:
+            lines.append(f"- `{item.policy_id}` owned by {item.owner} expired {item.expires_on}: {item.reason}")
+    else:
+        lines.append("No expired policy exceptions found.")
     return "\n".join(lines) + "\n"

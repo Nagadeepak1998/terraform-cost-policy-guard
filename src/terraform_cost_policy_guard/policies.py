@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from collections import Counter
 import json
 from typing import Any
 
-from .models import EvaluationResult, EvaluationSummary, PolicyViolation
+from .models import EvaluationResult, EvaluationSummary, HistoryRequest, HistoryResult, HistoryWindowResult, PolicyViolation
 
 PROTECTED_RESOURCE_TYPES = {"aws_db_instance", "aws_s3_bucket"}
 SENSITIVE_PORTS = {22, 3389, 5432, 3306}
@@ -115,6 +116,50 @@ def evaluate_plan(
         summary=summary,
         violations=violations,
         metadata={"required_tags": required_tags, "monthly_cost_limit": monthly_cost_limit},
+    )
+
+
+def review_history(request: HistoryRequest) -> HistoryResult:
+    window_results: list[HistoryWindowResult] = []
+    expired_exceptions = []
+    unwaived_policy_ids: list[str] = []
+
+    for window in sorted(request.windows, key=lambda item: item.reviewed_on):
+        evaluation = evaluate_plan(window.plan, request.monthly_cost_limit, request.required_tags)
+        violation_ids = {item.policy_id for item in evaluation.violations}
+        active_ids = {item.policy_id for item in window.exceptions if item.expires_on >= window.reviewed_on}
+        expired = [
+            item
+            for item in window.exceptions
+            if item.expires_on < window.reviewed_on and item.policy_id in violation_ids
+        ]
+        expired_exceptions.extend(expired)
+        unwaived = [item for item in evaluation.violations if item.policy_id not in active_ids]
+        unwaived_policy_ids.extend(item.policy_id for item in unwaived)
+        blocked = bool(unwaived or expired)
+        window_results.append(
+            HistoryWindowResult(
+                reviewed_on=window.reviewed_on,
+                change_id=window.change_id,
+                decision="block" if blocked else "allow",
+                violation_count=len(evaluation.violations),
+                waived_violation_count=len(evaluation.violations) - len(unwaived),
+                expired_exception_count=len(expired),
+                monthly_cost_delta=evaluation.summary.estimated_monthly_cost_delta,
+            )
+        )
+
+    counts = Counter(unwaived_policy_ids)
+    recurring = sorted(policy_id for policy_id, count in counts.items() if count > 1)
+    blocked_windows = sum(item.decision == "block" for item in window_results)
+    return HistoryResult(
+        status="block" if blocked_windows else "allow",
+        reviewed_windows=len(window_results),
+        blocked_windows=blocked_windows,
+        total_monthly_cost_delta=sum(item.monthly_cost_delta for item in window_results),
+        expired_exceptions=expired_exceptions,
+        recurring_policy_ids=recurring,
+        windows=window_results,
     )
 
 

@@ -4,12 +4,13 @@ from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, generate_latest
 
-from .models import EvaluationRequest, EvaluationResult
-from .policies import evaluate_plan
+from .models import EvaluationRequest, EvaluationResult, HistoryRequest, HistoryResult
+from .policies import evaluate_plan, review_history
 
 app = FastAPI(title="Terraform Cost Policy Guard", version="0.1.0")
 
 EVALUATIONS = Counter("tf_policy_guard_evaluations_total", "Total Terraform plan evaluations", ["blocked"])
+HISTORY_REVIEWS = Counter("tf_policy_guard_history_reviews_total", "Total multi-plan history reviews", ["status"])
 
 
 @app.get("/healthz")
@@ -30,4 +31,11 @@ def evaluate(request: EvaluationRequest) -> EvaluationResult:
         required_tags=request.required_tags,
     )
     EVALUATIONS.labels(blocked=str(result.summary.blocked).lower()).inc()
+    return result
+
+
+@app.post("/history", response_model=HistoryResult)
+def history(request: HistoryRequest) -> HistoryResult:
+    result = review_history(request)
+    HISTORY_REVIEWS.labels(status=result.status).inc()
     return result

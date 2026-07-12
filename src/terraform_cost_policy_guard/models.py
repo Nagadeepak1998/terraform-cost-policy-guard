@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -34,3 +35,43 @@ class EvaluationRequest(BaseModel):
     plan: dict[str, Any]
     monthly_cost_limit: float = 500.0
     required_tags: list[str] = Field(default_factory=lambda: ["owner", "environment"])
+
+
+class PolicyException(BaseModel):
+    policy_id: str
+    owner: str
+    expires_on: date
+    reason: str
+
+
+class HistoryWindow(BaseModel):
+    reviewed_on: date
+    change_id: str
+    plan: dict[str, Any]
+    exceptions: list[PolicyException] = Field(default_factory=list)
+
+
+class HistoryRequest(BaseModel):
+    windows: list[HistoryWindow]
+    monthly_cost_limit: float = 500.0
+    required_tags: list[str] = Field(default_factory=lambda: ["owner", "environment"])
+
+
+class HistoryWindowResult(BaseModel):
+    reviewed_on: date
+    change_id: str
+    decision: str
+    violation_count: int
+    waived_violation_count: int
+    expired_exception_count: int
+    monthly_cost_delta: float
+
+
+class HistoryResult(BaseModel):
+    status: str
+    reviewed_windows: int
+    blocked_windows: int
+    total_monthly_cost_delta: float
+    expired_exceptions: list[PolicyException]
+    recurring_policy_ids: list[str]
+    windows: list[HistoryWindowResult]

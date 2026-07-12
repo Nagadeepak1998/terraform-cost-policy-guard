@@ -32,3 +32,10 @@ def test_evaluate_endpoint_returns_summary() -> None:
     assert response.status_code == 200
     assert payload["summary"]["blocked"] is True
     assert payload["summary"]["violation_count"] == 5
+
+
+def test_history_endpoint_returns_exception_governance() -> None:
+    response = TestClient(app).post("/history", json=load_fixture("plan_history.json"))
+    assert response.status_code == 200
+    assert response.json()["status"] == "block"
+    assert len(response.json()["expired_exceptions"]) == 1

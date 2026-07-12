@@ -37,3 +37,7 @@ Build a recruiter-readable service that can:
 ## Why This Helps My Portfolio
 
 This repo is stronger than a toy Terraform script because it shows the surrounding engineering work: change safety logic, testability, deploy artifacts, operational endpoints, and documentation that a platform or SRE hiring manager can scan quickly.
+
+# Multi-plan governance upgrade
+
+The original gate answered whether one Terraform plan was safe. The July 2026 upgrade adds a portfolio view across dated changes so a platform reviewer can see cumulative cost movement and whether temporary policy exceptions are still valid. Each exception records a policy, owner, reason, and expiry date; an expired exception blocks the history review instead of silently becoming permanent risk.

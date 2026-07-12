@@ -2,7 +2,7 @@ PYTHON ?= python3
 VENV ?= .venv
 ACTIVATE = . $(VENV)/bin/activate
 
-.PHONY: venv install test run lint sample-eval sample-report sample-gate docker-build
+.PHONY: venv install test run lint sample-eval sample-report sample-gate history-report docker-build
 
 venv:
 	$(PYTHON) -m venv $(VENV)
@@ -25,6 +25,9 @@ sample-report:
 
 sample-gate:
 	$(ACTIVATE) && PYTHONPATH=src tf-policy-guard tests/fixtures/risky_plan.json --monthly-cost-limit 500 --fail-on-block
+
+history-report:
+	$(ACTIVATE) && PYTHONPATH=src tf-policy-guard tests/fixtures/plan_history.json --history --report-md reports/plan-history-review.md --fail-on-block; test $$? -eq 2
 
 docker-build:
 	docker build -t terraform-cost-policy-guard:local .

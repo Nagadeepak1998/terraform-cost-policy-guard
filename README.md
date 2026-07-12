@@ -7,6 +7,7 @@
 - Terraform plan risk analysis for cost, destructive changes, tag hygiene, public ingress, and privileged IAM
 - Python service design that works both as an API and as a pipeline CLI
 - Markdown policy review reports for pull requests and change tickets
+- Multi-plan change history with exception ownership and expiry enforcement
 - Local test automation with `pytest`
 - Container packaging plus Kubernetes and Terraform deployment scaffolding
 - Basic observability through `/healthz`, `/metrics`, and structured evaluation output
@@ -75,6 +76,14 @@ make sample-report
 
 Sample output is tracked at `reports/risky-policy-review.md`.
 
+Review a dated set of plans and fail when a policy exception has expired:
+
+```bash
+make history-report
+```
+
+The tracked `reports/plan-history-review.md` shows cost movement, plan decisions, waived violations, recurring policies, and expired exception owners. The same review is available through `POST /history`.
+
 Fail a pipeline when the plan is blocked:
 
 ```bash
@@ -131,19 +140,22 @@ gh auth refresh -h github.com -s workflow
 
 Commands verified locally in this run:
 
-- `. .venv/bin/activate && PYTHONPATH=src pytest`
+- `. .venv/bin/activate && PYTHONPATH=src pytest` (10 passed)
 - `. .venv/bin/activate && PYTHONPATH=src python -m compileall src tests`
 - `make sample-report`
-- `. .venv/bin/activate && PYTHONPATH=src tf-policy-guard tests/fixtures/risky_plan.json --monthly-cost-limit 500 --fail-on-block` returned exit code `2` for the risky fixture
+- `make history-report` returned the expected exit code `2` for the expired exception
+- `terraform -chdir=infra/terraform fmt -check -recursive`
 
 Local blockers on this machine:
 
 - `docker: command not found`
-- `terraform: command not found`
 - `kubectl: command not found`
+
+Terraform v1.15.7 is available locally.
 
 ## Limitations
 
 - Cost estimation is fixture-driven and expects a monthly delta field in the plan JSON.
+- Exceptions are deliberately explicit in the history manifest; this project does not integrate an external approval system.
 - Policies are intentionally small and easy to extend rather than tied to a full policy framework.
 - Terraform deployment files are a starter skeleton and assume an existing Kubernetes provider configuration.

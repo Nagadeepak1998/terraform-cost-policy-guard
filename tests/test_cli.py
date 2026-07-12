@@ -39,3 +39,10 @@ def test_cli_can_fail_pipeline_when_plan_is_blocked(monkeypatch) -> None:
     )
 
     assert main() == 2
+
+
+def test_cli_history_writes_report_and_blocks(tmp_path: Path, monkeypatch) -> None:
+    report_path = tmp_path / "history.md"
+    monkeypatch.setattr("sys.argv", ["tf-policy-guard", str(FIXTURES / "plan_history.json"), "--history", "--report-md", str(report_path), "--fail-on-block"])
+    assert main() == 2
+    assert "Exception Governance" in report_path.read_text()
