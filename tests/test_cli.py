@@ -46,3 +46,20 @@ def test_cli_history_writes_report_and_blocks(tmp_path: Path, monkeypatch) -> No
     monkeypatch.setattr("sys.argv", ["tf-policy-guard", str(FIXTURES / "plan_history.json"), "--history", "--report-md", str(report_path), "--fail-on-block"])
     assert main() == 2
     assert "Exception Governance" in report_path.read_text()
+
+
+def test_cli_budget_review_writes_report_and_blocks(tmp_path: Path, monkeypatch) -> None:
+    report_path = tmp_path / "budget.md"
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "tf-policy-guard",
+            str(FIXTURES / "budget_review.json"),
+            "--budget-review",
+            "--report-md",
+            str(report_path),
+            "--fail-on-block",
+        ],
+    )
+    assert main() == 2
+    assert "Projected utilization: 104.0%" in report_path.read_text()

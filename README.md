@@ -8,6 +8,7 @@
 - Python service design that works both as an API and as a pipeline CLI
 - Markdown policy review reports for pull requests and change tickets
 - Multi-plan change history with exception ownership and expiry enforcement
+- FinOps budget readiness using current spend, proposed cost, warning thresholds, and team ownership
 - Local test automation with `pytest`
 - Container packaging plus Kubernetes and Terraform deployment scaffolding
 - Basic observability through `/healthz`, `/metrics`, and structured evaluation output
@@ -84,6 +85,14 @@ make history-report
 
 The tracked `reports/plan-history-review.md` shows cost movement, plan decisions, waived violations, recurring policies, and expired exception owners. The same review is available through `POST /history`.
 
+Review whether a proposed infrastructure change fits a team's monthly budget:
+
+```bash
+make budget-report
+```
+
+The tracked `reports/budget-readiness-review.md` records the team, owner, change ID, projected spend, utilization, remaining budget, and the blocking reason. The same deterministic review is available through `POST /budget/review`.
+
 Fail a pipeline when the plan is blocked:
 
 ```bash
@@ -106,6 +115,14 @@ Evaluate a plan:
 curl -X POST http://127.0.0.1:8080/evaluate \
   -H 'Content-Type: application/json' \
   -d @<(jq -n --slurpfile plan tests/fixtures/risky_plan.json '{plan: $plan[0], monthly_cost_limit: 500}')
+```
+
+Review a budget projection:
+
+```bash
+curl -X POST http://127.0.0.1:8080/budget/review \
+  -H 'Content-Type: application/json' \
+  --data @tests/fixtures/budget_review.json
 ```
 
 Health and metrics:
@@ -140,22 +157,20 @@ gh auth refresh -h github.com -s workflow
 
 Commands verified locally in this run:
 
-- `. .venv/bin/activate && PYTHONPATH=src pytest` (10 passed)
+- `. .venv/bin/activate && PYTHONPATH=src pytest` (14 passed)
 - `. .venv/bin/activate && PYTHONPATH=src python -m compileall src tests`
 - `make sample-report`
 - `make history-report` returned the expected exit code `2` for the expired exception
+- `make budget-report` returned the expected exit code `2` at 104% projected utilization
 - `terraform -chdir=infra/terraform fmt -check -recursive`
-
-Local blockers on this machine:
-
-- `docker: command not found`
-- `kubectl: command not found`
-
-Terraform v1.15.7 is available locally.
+- `kubectl apply --dry-run=client --validate=false -f infra/k8s`
+- `docker build -t terraform-cost-policy-guard:local .`
+- Live container smoke passed for `/healthz`, `/budget/review`, and the budget review Prometheus counter
 
 ## Limitations
 
 - Cost estimation is fixture-driven and expects a monthly delta field in the plan JSON.
+- Current spend and budget values come from the review manifest; no cloud billing API is called.
 - Exceptions are deliberately explicit in the history manifest; this project does not integrate an external approval system.
 - Policies are intentionally small and easy to extend rather than tied to a full policy framework.
 - Terraform deployment files are a starter skeleton and assume an existing Kubernetes provider configuration.

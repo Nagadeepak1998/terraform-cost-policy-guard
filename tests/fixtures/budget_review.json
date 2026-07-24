@@ -1,0 +1,9 @@
+{
+  "team": "ml-platform",
+  "owner": "platform-finops",
+  "monthly_budget": 10000,
+  "current_monthly_spend": 8200,
+  "proposed_monthly_delta": 2200,
+  "warning_threshold_percent": 80,
+  "change_id": "gpu-serving-capacity"
+}

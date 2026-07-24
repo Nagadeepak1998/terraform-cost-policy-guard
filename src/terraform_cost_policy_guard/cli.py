@@ -4,9 +4,9 @@ import argparse
 import json
 from pathlib import Path
 
-from .models import HistoryRequest
-from .policies import evaluate_plan, review_history
-from .reports import render_history_report, render_markdown_report
+from .models import BudgetReviewRequest, HistoryRequest
+from .policies import evaluate_plan, review_budget, review_history
+from .reports import render_budget_report, render_history_report, render_markdown_report
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -17,6 +17,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--report-md", type=Path, help="Optional path for a Markdown review report")
     parser.add_argument("--fail-on-block", action="store_true", help="Exit with code 2 when policies block the plan")
     parser.add_argument("--history", action="store_true", help="Review a dated multi-plan history manifest")
+    parser.add_argument("--budget-review", action="store_true", help="Review a team budget projection manifest")
     return parser
 
 
@@ -24,6 +25,13 @@ def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
     plan = json.loads(args.plan.read_text())
+    if args.budget_review:
+        result = review_budget(BudgetReviewRequest.model_validate(plan))
+        if args.report_md:
+            args.report_md.parent.mkdir(parents=True, exist_ok=True)
+            args.report_md.write_text(render_budget_report(result))
+        print(result.model_dump_json(indent=2))
+        return 2 if args.fail_on_block and result.status == "block" else 0
     if args.history:
         request = HistoryRequest.model_validate({**plan, "monthly_cost_limit": args.monthly_cost_limit, "required_tags": args.required_tags or ["owner", "environment"]})
         result = review_history(request)

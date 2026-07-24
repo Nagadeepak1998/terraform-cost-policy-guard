@@ -39,3 +39,10 @@ def test_history_endpoint_returns_exception_governance() -> None:
     assert response.status_code == 200
     assert response.json()["status"] == "block"
     assert len(response.json()["expired_exceptions"]) == 1
+
+
+def test_budget_endpoint_returns_projected_spend_gate() -> None:
+    response = TestClient(app).post("/budget/review", json=load_fixture("budget_review.json"))
+    assert response.status_code == 200
+    assert response.json()["status"] == "block"
+    assert response.json()["projected_monthly_spend"] == 10400

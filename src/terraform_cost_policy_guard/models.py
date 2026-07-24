@@ -75,3 +75,25 @@ class HistoryResult(BaseModel):
     expired_exceptions: list[PolicyException]
     recurring_policy_ids: list[str]
     windows: list[HistoryWindowResult]
+
+
+class BudgetReviewRequest(BaseModel):
+    team: str
+    owner: str
+    monthly_budget: float = Field(gt=0)
+    current_monthly_spend: float = Field(ge=0)
+    proposed_monthly_delta: float
+    warning_threshold_percent: float = Field(default=80.0, gt=0, le=100)
+    change_id: str
+
+
+class BudgetReviewResult(BaseModel):
+    status: str
+    team: str
+    owner: str
+    change_id: str
+    monthly_budget: float
+    projected_monthly_spend: float
+    projected_utilization_percent: float
+    remaining_budget: float
+    findings: list[str]

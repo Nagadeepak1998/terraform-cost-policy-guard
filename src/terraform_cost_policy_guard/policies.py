@@ -4,7 +4,16 @@ from collections import Counter
 import json
 from typing import Any
 
-from .models import EvaluationResult, EvaluationSummary, HistoryRequest, HistoryResult, HistoryWindowResult, PolicyViolation
+from .models import (
+    BudgetReviewRequest,
+    BudgetReviewResult,
+    EvaluationResult,
+    EvaluationSummary,
+    HistoryRequest,
+    HistoryResult,
+    HistoryWindowResult,
+    PolicyViolation,
+)
 
 PROTECTED_RESOURCE_TYPES = {"aws_db_instance", "aws_s3_bucket"}
 SENSITIVE_PORTS = {22, 3389, 5432, 3306}
@@ -160,6 +169,35 @@ def review_history(request: HistoryRequest) -> HistoryResult:
         expired_exceptions=expired_exceptions,
         recurring_policy_ids=recurring,
         windows=window_results,
+    )
+
+
+def review_budget(request: BudgetReviewRequest) -> BudgetReviewResult:
+    projected_spend = request.current_monthly_spend + request.proposed_monthly_delta
+    utilization = projected_spend / request.monthly_budget * 100
+    remaining = request.monthly_budget - projected_spend
+    findings = []
+
+    if projected_spend > request.monthly_budget:
+        findings.append(
+            f"Projected spend exceeds the monthly budget by ${abs(remaining):.2f}."
+        )
+    elif utilization >= request.warning_threshold_percent:
+        findings.append(
+            f"Projected budget utilization {utilization:.1f}% meets or exceeds the "
+            f"{request.warning_threshold_percent:.1f}% warning threshold."
+        )
+
+    return BudgetReviewResult(
+        status="block" if projected_spend > request.monthly_budget else "warn" if findings else "ready",
+        team=request.team,
+        owner=request.owner,
+        change_id=request.change_id,
+        monthly_budget=request.monthly_budget,
+        projected_monthly_spend=projected_spend,
+        projected_utilization_percent=utilization,
+        remaining_budget=remaining,
+        findings=findings,
     )
 
 

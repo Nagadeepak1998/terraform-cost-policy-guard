@@ -3,9 +3,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from terraform_cost_policy_guard.models import HistoryRequest
-from terraform_cost_policy_guard.policies import evaluate_plan, review_history
-from terraform_cost_policy_guard.reports import render_history_report, render_markdown_report
+from terraform_cost_policy_guard.models import BudgetReviewRequest, HistoryRequest
+from terraform_cost_policy_guard.policies import evaluate_plan, review_budget, review_history
+from terraform_cost_policy_guard.reports import render_budget_report, render_history_report, render_markdown_report
 
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -57,3 +57,27 @@ def test_history_review_honors_active_exception_and_blocks_expired_one() -> None
     report = render_history_report(result)
     assert "Decision: **BLOCK**" in report
     assert "expired 2026-07-10" in report
+
+
+def test_budget_review_blocks_projected_overspend() -> None:
+    result = review_budget(BudgetReviewRequest.model_validate(load_fixture("budget_review.json")))
+    assert result.status == "block"
+    assert result.projected_monthly_spend == 10400
+    assert result.projected_utilization_percent == 104
+    assert result.remaining_budget == -400
+    assert "exceeds the monthly budget by $400.00" in result.findings[0]
+    assert "Decision: **BLOCK**" in render_budget_report(result)
+
+
+def test_budget_review_warns_before_budget_is_exhausted() -> None:
+    request = BudgetReviewRequest(
+        team="ml-platform",
+        owner="platform-finops",
+        monthly_budget=10000,
+        current_monthly_spend=7600,
+        proposed_monthly_delta=600,
+        change_id="gpu-batch-workers",
+    )
+    result = review_budget(request)
+    assert result.status == "warn"
+    assert result.projected_utilization_percent == 82

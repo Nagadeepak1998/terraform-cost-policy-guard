@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 
-from .models import EvaluationResult, HistoryResult
+from .models import BudgetReviewResult, EvaluationResult, HistoryResult
 
 
 def render_markdown_report(result: EvaluationResult) -> str:
@@ -83,4 +83,32 @@ def render_history_report(result: HistoryResult) -> str:
             lines.append(f"- `{item.policy_id}` owned by {item.owner} expired {item.expires_on}: {item.reason}")
     else:
         lines.append("No expired policy exceptions found.")
+    return "\n".join(lines) + "\n"
+
+
+def render_budget_report(result: BudgetReviewResult) -> str:
+    lines = [
+        "# Terraform Budget Readiness Review",
+        "",
+        f"Decision: **{result.status.upper()}**",
+        "",
+        "## Ownership",
+        "",
+        f"- Team: {result.team}",
+        f"- Owner: {result.owner}",
+        f"- Change: {result.change_id}",
+        "",
+        "## Budget Projection",
+        "",
+        f"- Monthly budget: ${result.monthly_budget:.2f}",
+        f"- Projected monthly spend: ${result.projected_monthly_spend:.2f}",
+        f"- Projected utilization: {result.projected_utilization_percent:.1f}%",
+        f"- Remaining budget: ${result.remaining_budget:.2f}",
+        "",
+        "## Findings",
+        "",
+    ]
+    lines.extend(f"- {finding}" for finding in result.findings)
+    if not result.findings:
+        lines.append("- No budget readiness findings.")
     return "\n".join(lines) + "\n"

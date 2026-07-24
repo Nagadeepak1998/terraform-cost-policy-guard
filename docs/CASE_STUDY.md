@@ -41,3 +41,9 @@ This repo is stronger than a toy Terraform script because it shows the surroundi
 # Multi-plan governance upgrade
 
 The original gate answered whether one Terraform plan was safe. The July 2026 upgrade adds a portfolio view across dated changes so a platform reviewer can see cumulative cost movement and whether temporary policy exceptions are still valid. Each exception records a policy, owner, reason, and expiry date; an expired exception blocks the history review instead of silently becoming permanent risk.
+
+## Budget readiness upgrade
+
+A per-plan threshold does not show whether a team has already consumed most of its cloud budget. The budget review joins current monthly spend with the proposed Terraform cost delta, then returns `ready`, `warn`, or `block` based on projected utilization. The CLI and API share the same evaluator, Prometheus records review outcomes, and the Markdown evidence names the accountable team, owner, and change.
+
+The sample deliberately projects $10,400 against a $10,000 budget. Tests prove the blocking path, the pre-limit warning path, CLI exit behavior, report output, and API contract without claiming integration with a live cloud billing system.
